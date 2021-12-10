@@ -52,6 +52,10 @@ func NewService(dbFilePath string) (Service, error) {
 
 func (s *Service) addPerson(person domain.Person) error {
 	s.people.People = append(s.people.People, person)
+	return s.saveFile()
+}
+
+func (s Service) saveFile() error {
 	allPeopleJSON, err := json.Marshal(s.people)
 	if err != nil {
 		return fmt.Errorf("Error trying to encode people as JSON: %s", err.Error())
@@ -92,6 +96,26 @@ func (s Service) GetByID(personID int) (domain.Person, error) {
 		}
 	}
 	return domain.Person{}, fmt.Errorf("Person not found")
+}
+
+func (s *Service) DeleteByID(personID int) error {
+	var indexToRemove int = -1
+	for index, currentPerson := range s.people.People {
+		if currentPerson.ID == personID {
+			indexToRemove = index
+			break
+		}
+	}
+	if indexToRemove < 0 {
+		return fmt.Errorf("There is no person with the provided ID")
+	}
+
+	s.people.People = append(
+		s.people.People[:indexToRemove],
+		s.people.People[indexToRemove+1:]...,
+	)
+
+	return s.saveFile()
 }
 
 func createEmptyFile(dbFilePath string) error {

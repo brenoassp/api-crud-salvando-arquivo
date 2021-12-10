@@ -29,11 +29,10 @@ func main() {
 					http.Error(w, "Error trying to list people", http.StatusInternalServerError)
 					return
 				}
-				return
 			} else {
 				personID, err := strconv.Atoi(path)
 				if err != nil {
-					fmt.Println("Invalid id given. person ID must be an integer")
+					http.Error(w, "Invalid id given. person ID must be an integer", http.StatusBadRequest)
 					return
 				}
 				person, err := personService.GetByID(personID)
@@ -48,8 +47,8 @@ func main() {
 					http.Error(w, "Error trying to get person", http.StatusInternalServerError)
 					return
 				}
-				return
 			}
+			return
 		}
 		if r.Method == "POST" {
 			var person domain.Person
@@ -72,6 +71,26 @@ func main() {
 			}
 			w.WriteHeader(http.StatusCreated)
 			return
+		}
+		if r.Method == "DELETE" {
+			path := strings.TrimPrefix(r.URL.Path, "/person/")
+			if path == "" {
+				http.Error(w, "ID is required to delete a person", http.StatusBadRequest)
+				return
+			} else {
+				personID, err := strconv.Atoi(path)
+				if err != nil {
+					http.Error(w, "Invalid id given. person ID must be an integer", http.StatusBadRequest)
+					return
+				}
+				err = personService.DeleteByID(personID)
+				if err != nil {
+					fmt.Printf("Error trying to delete person: %s\n", err.Error())
+					http.Error(w, "Error trying to delete person", http.StatusInternalServerError)
+					return
+				}
+				w.WriteHeader(http.StatusOK)
+			}
 		}
 	})
 
