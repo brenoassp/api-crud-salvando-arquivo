@@ -50,7 +50,7 @@ func NewService(dbFilePath string) (Service, error) {
 	}, nil
 }
 
-func (s Service) addPerson(person domain.Person) error {
+func (s *Service) addPerson(person domain.Person) error {
 	s.people.People = append(s.people.People, person)
 	allPeopleJSON, err := json.Marshal(s.people)
 	if err != nil {
@@ -59,7 +59,7 @@ func (s Service) addPerson(person domain.Person) error {
 	return ioutil.WriteFile(s.dbFilePath, allPeopleJSON, 0755)
 }
 
-func (s Service) Create(person domain.Person) error {
+func (s *Service) Create(person domain.Person) error {
 	if s.exists(person) {
 		return fmt.Errorf("There is already a person with this ID registered")
 	}
@@ -79,6 +79,19 @@ func (s Service) exists(person domain.Person) bool {
 		}
 	}
 	return false
+}
+
+func (s Service) List() domain.People {
+	return s.people
+}
+
+func (s Service) GetByID(personID int) (domain.Person, error) {
+	for _, currentPerson := range s.people.People {
+		if currentPerson.ID == personID {
+			return currentPerson, nil
+		}
+	}
+	return domain.Person{}, fmt.Errorf("Person not found")
 }
 
 func createEmptyFile(dbFilePath string) error {

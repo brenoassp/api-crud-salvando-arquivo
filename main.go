@@ -22,13 +22,33 @@ func main() {
 			path := strings.TrimPrefix(r.URL.Path, "/person/")
 			if path == "" {
 				// list all people
+				w.WriteHeader(http.StatusOK)
+				w.Header().Set("Content-Type", "application/json")
+				err = json.NewEncoder(w).Encode(personService.List())
+				if err != nil {
+					http.Error(w, "Error trying to list people", http.StatusInternalServerError)
+					return
+				}
+				return
 			} else {
-				_, err := strconv.Atoi(path)
+				personID, err := strconv.Atoi(path)
 				if err != nil {
 					fmt.Println("Invalid id given. person ID must be an integer")
 					return
 				}
-
+				person, err := personService.GetByID(personID)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusNotFound)
+					return
+				}
+				w.WriteHeader(http.StatusOK)
+				w.Header().Set("Content-Type", "application/json")
+				err = json.NewEncoder(w).Encode(person)
+				if err != nil {
+					http.Error(w, "Error trying to get person", http.StatusInternalServerError)
+					return
+				}
+				return
 			}
 		}
 		if r.Method == "POST" {
@@ -37,6 +57,11 @@ func main() {
 			if err != nil {
 				fmt.Printf("Error trying to decode body. Body should be a json. Error: %s\n", err.Error())
 				http.Error(w, "Error trying to create person", http.StatusBadRequest)
+				return
+			}
+			if person.ID <= 0 {
+				http.Error(w, "person ID should be a positive integer", http.StatusBadRequest)
+				return
 			}
 
 			err = personService.Create(person)
