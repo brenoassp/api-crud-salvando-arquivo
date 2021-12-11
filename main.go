@@ -91,6 +91,29 @@ func main() {
 				}
 				w.WriteHeader(http.StatusOK)
 			}
+			return
+		}
+		if r.Method == "PUT" {
+			var person domain.Person
+			err := json.NewDecoder(r.Body).Decode(&person)
+			if err != nil {
+				fmt.Printf("Error trying to decode body. Body should be a json. Error: %s\n", err.Error())
+				http.Error(w, "Error trying to update person", http.StatusBadRequest)
+				return
+			}
+			if person.ID <= 0 {
+				http.Error(w, "person ID should be a positive integer", http.StatusBadRequest)
+				return
+			}
+
+			err = personService.Update(person)
+			if err != nil {
+				fmt.Printf("Error trying to update person: %s\n", err.Error())
+				http.Error(w, "Error trying to update person", http.StatusInternalServerError)
+				return
+			}
+			w.WriteHeader(http.StatusOK)
+			return
 		}
 	})
 

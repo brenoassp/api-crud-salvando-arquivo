@@ -118,6 +118,22 @@ func (s *Service) DeleteByID(personID int) error {
 	return s.saveFile()
 }
 
+func (s *Service) Update(person domain.Person) error {
+	var indexToUpdate int = -1
+	for index, currentPerson := range s.people.People {
+		if currentPerson.ID == person.ID {
+			indexToUpdate = index
+			break
+		}
+	}
+	if indexToUpdate < 0 {
+		return fmt.Errorf("There is no person with the given ID to be updated")
+	}
+
+	s.people.People[indexToUpdate] = person
+	return s.saveFile()
+}
+
 func createEmptyFile(dbFilePath string) error {
 	var people domain.People = domain.People{
 		People: []domain.Person{},
